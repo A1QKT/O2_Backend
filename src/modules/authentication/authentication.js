@@ -51,10 +51,9 @@ router.post("/signup", async (req, res) => {
     }
 })
 
-router.post("/logined", async (req, res) => {
+router.post("/login", async (req, res) => {
     try{
         const {email, password} = req.body;
-        console.log(req.body);
         if(!email || !password ){
             res.status(400).send("All input is required");
         }
