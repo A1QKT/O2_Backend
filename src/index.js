@@ -4,7 +4,7 @@ const server = http.createServer(app);
 
 const {API_PORT} = process.env;
 
-const port = process.env.PORT || API_PORT;
+const port = process.env.PORT || 80;
 
 server.listen(port, () => {
     console.log(`server listen on port ${port}`);
