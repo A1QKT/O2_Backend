@@ -1,6 +1,6 @@
 module.exports = {
     secret: "SECRET",
-    port: "API_PORT",
+    port: "PORT",
     experience_threshold: "EXPERIENCE_THRESHOLD",
     mongo: {
         uri: "MONGO_URI"
