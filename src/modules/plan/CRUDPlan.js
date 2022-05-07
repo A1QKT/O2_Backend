@@ -27,6 +27,9 @@ router.post("/create-plan", async (req, res) => {
 router.get("/get-one-plan", async (req, res) => {
     try{
         const {latitude, longtitude} = req.body;
+        if(!latitude || !longtitude) {
+            res.status(400).send("All input are required");
+        }
         const plan = await Plan.findOne({
             latitude: latitude,
             longtitude: longtitude,
@@ -48,12 +51,26 @@ router.get("/get-all-plan", async (req, res) => {
 })
 
 router.get("/get-plan-around", async (req, res) => {
-    const {distance, longPerson, laPerson} = req.body;
-    if(!distance || !longPerson || !laPerson){
-        res.status(400).send("All input is required");
-    }
-    try{
-        
+    try{ 
+        const {distance, longPerson, laPerson} = req.body;
+        if(!distance || !longPerson || !laPerson){
+            res.status(400).send("All input is required");
+        }
+        const plans = await Plan.aggregate([{
+                $match: {
+                    distance: {
+                        $gte: {
+                            $sqrt: {
+                                $add: [
+                                    { $pow: [ { $subtract: [ "$longtitude", longPerson ] }, 2 ] },
+                                    { $pow: [ { $subtract: [ "$latitude", laPerson ] }, 2 ] }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }]);
+        res.status(200).json(plans);
     }
     catch (error){
         console.log(error);
@@ -63,32 +80,44 @@ router.get("/get-plan-around", async (req, res) => {
 router.post("/update-plan", async (req, res) => {
     try{
         const {experience, latitude, longtitude} = req.body;
-        if(experience > config.get("experience_threshold")){
-            const plan = await findOneAndUpdate({
-                latitude: latitude,
-                longtitude: longtitude
-            },
-            {
-                $set: {experience: 0},
-                $inc: {level: 1}
-            });
+        const plan = await Plan.find({latitude: latitude, longtitude: longtitude});
+        if(plan.experience + experience > config.get("experience_threshold")){
+            plan.experience = 0;
+            plan.level = plan.level + 1;
             res.status(200).json(plan);
         }
-    } 
+        else {
+            const plan = await Plan.findOneAndUpdate({
+                latitude: latitude,
+                longtitude: longtitude
+            },{
+                $inc: {
+                    experience: experience,
+                }
+            }, {new: true}
+            )
+        }
+    }
     catch (error) {
         console.log(error);
     }
 })
 
-router.post("/update-experience", async (req, res) => {
-    const {addExperience} = req.body;
-
+router.post("/delete", async (req, res) => {
+    try{
+        const {latitude, longtitude} = req.body;
+        if(!latitude || !longtitude) {
+            res.status(400).send("All input are required");
+        }
+        const plan = Plan.findOneAndRemove({
+            latitude: latitude,
+            longtitude: longtitude,
+        });
+        res.status(200).json(plan);
+    }
+    catch (error){
+        console.log(error);
+    }
 })
-// router.post("/delete", async (req, res) => {
-//     const {latitude, longtitude} = req.body;
-//     if(!latitude || !longtitude) {
-//         res.status(400).send("All input are required");
-//     }
-// })
 
 module.exports = router;
