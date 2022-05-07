@@ -1,5 +1,4 @@
 FROM node:14.18.1
-ENV NODE_ENV=production
 
 WORKDIR /node-todo
 
@@ -10,3 +9,5 @@ RUN npm install
 COPY . .
 
 CMD [ "node", "./src/index.js" ]
+
+EXPOSE 4001
