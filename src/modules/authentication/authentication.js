@@ -1,9 +1,8 @@
 const express = require("express");
 const User = require("../user/user.model");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const config = require("config");
 const validateEmail = require("../../script/email-validation");
+const Token = require("../../script/token");
 
 const router = express.Router();
 
@@ -30,24 +29,13 @@ router.post("/signup", async (req, res) => {
             username: `${firstname} ${lastname}`,
             email: email,
             password: encryptedPassword,
-        })
-        
-        const token = jwt.sign(
-            {
-                user_id: user._id,
-                email: user.email,
-            },
-            config.get("secret"),
-            {
-                expiresIn: "2h",
-            }
-        )
-        user.token = token;
-        
+        });
+        user.token = new Token(user._id, user.email, "user", {}).sign;
         res.status(201).json(user);
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
@@ -64,18 +52,8 @@ router.post("/login", async (req, res) => {
         const user = await User.findOne({email});
         if(user && await bcrypt.compare(password, user.password)) {
             console.log("some thing login");
-            const token = jwt.sign(
-                {
-                    user_id: user._id,
-                    email: email
-                },
-                config.get("secret"),
-                {
-                    expiresIn: "2h"
-                }
-            )
-            user.token = token;
-            user.firstname = "lol khanh";
+            user.token = new Token(user._id, user.email, "user", {}).sign;
+            console.log(user.token);
             res.status(200).json(user);
         }
         else{
@@ -84,6 +62,7 @@ router.post("/login", async (req, res) => {
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 

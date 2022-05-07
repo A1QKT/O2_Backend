@@ -1,16 +1,20 @@
 const express = require("express");
 const Plan = require("./plan.model");
 const config = require("config");
+const Token = require("../../script/token");
 
 const router = express.Router();
 
 router.post("/create-plan", async (req, res) => {
     try{
-        const {longtitude, latitude} = req.body;
-        if(!longtitude || !latitude){
+        const {longtitude, latitude} = Token.decode(req.headers["x-token"]).payload;
+        if (!longtitude || !latitude) { 
             res.status(400).send("All input is required");
-        } 
-
+        }
+        const oldPlan = await Plan.find({latitude: latitude, longtitude: longtitude});
+        if (oldPlan) {
+            res.status(409).send("Plan already existed");
+        }
         const plan = await Plan.create({
             level: 0,
             experience: 0,
@@ -21,11 +25,16 @@ router.post("/create-plan", async (req, res) => {
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 });
 
 router.get("/get-one-plan", async (req, res) => {
     try{
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token) {
+            res.status(401).send("Unauthored query");
+        }
         const {latitude, longtitude} = req.body;
         if(!latitude || !longtitude) {
             res.status(400).send("All input are required");
@@ -38,21 +47,27 @@ router.get("/get-one-plan", async (req, res) => {
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
 router.get("/get-all-plan", async (req, res) => {
     try{ 
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token) {
+            res.status(401).send("Unauthored query");
+        }
         res.status(200).json(await Plan.find({}));
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
 router.get("/get-plan-around", async (req, res) => {
-    try{ 
-        const {distance, longPerson, laPerson} = req.body;
+    try{
+        const {distance, longPerson, laPerson} = Token.decode(req.headers["x-token"]).payload;
         if(!distance || !longPerson || !laPerson){
             res.status(400).send("All input is required");
         }
@@ -74,38 +89,48 @@ router.get("/get-plan-around", async (req, res) => {
     }
     catch (error){
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
 router.post("/update-plan", async (req, res) => {
     try{
-        const {experience, latitude, longtitude} = req.body;
-        const plan = await Plan.find({latitude: latitude, longtitude: longtitude});
+        const {experience, latitude, longtitude} = Token.decode(req.headers["x-token"]).payload;
+        if(!experience || !latitude || !longtitude){
+            res.status(400).send("All input are required");
+        }
+        let plan = await Plan.findOne({latitude: latitude, longtitude: longtitude});
         if(plan.experience + experience > config.get("experience_threshold")){
-            plan.experience = 0;
-            plan.level = plan.level + 1;
+            plan = await Plan.findOneAndUpdate({
+                latitude: latitude,
+                longtitude: longtitude
+            },{
+                experience: 0,
+                $inc: {level: 1},
+            }, {new: true});
             res.status(200).json(plan);
         }
         else {
-            const plan = await Plan.findOneAndUpdate({
+            plan = await Plan.findOneAndUpdate({
                 latitude: latitude,
                 longtitude: longtitude
             },{
                 $inc: {
                     experience: experience,
                 }
-            }, {new: true}
-            )
+            }, {new: true});
+            res.status(200).json(plan);
         }
     }
     catch (error) {
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
 router.post("/delete", async (req, res) => {
     try{
-        const {latitude, longtitude} = req.body;
+        const {latitude, longtitude} = Token.decode(req.headers["x-token"]).payload;
         if(!latitude || !longtitude) {
             res.status(400).send("All input are required");
         }
@@ -117,6 +142,7 @@ router.post("/delete", async (req, res) => {
     }
     catch (error){
         console.log(error);
+        res.send({status: `${error}`});
     }
 })
 
