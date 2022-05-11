@@ -15,7 +15,7 @@ router.post("/create-plan", async (req, res) => {
         if (!longtitude || !latitude) { 
             res.status(400).send("All input is required");
         }
-        const oldPlan = await Plan.find({latitude: latitude, longtitude: longtitude});
+        const oldPlan = await Plan.findOne({latitude: latitude, longtitude: longtitude});
         if (oldPlan) {
             res.status(409).send("Plan already existed");
         }
