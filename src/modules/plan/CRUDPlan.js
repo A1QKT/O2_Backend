@@ -80,16 +80,17 @@ router.get("/get-plan-around", async (req, res) => {
             res.status(400).send("All input is required");
         }
         const plans = await Plan.aggregate([
-                {"$match": {
-                        "$gte": [
+                {"$match": 
+                    {"$expr":
+                        {"$gte": [
                             distance,
-                            {"$sqrt": {
-                                "$add": [
+                            {"$sqrt": 
+                                {"$add": [
                                     { "$pow": [ { "$subtract": [ "$longtitude", longPerson ] }, 2 ] },
-                                    { "$pow": [ { "$subtract": [ "$latitude", laPerson ] }, 2 ] }
-                                ]
-                            }
-                        }]
+                                    { "$pow": [ { "$subtract": [ "$latitude", laPerson ] }, 2] }]
+                                }
+                            }]
+                        }
                     }
                 }
             ]);
