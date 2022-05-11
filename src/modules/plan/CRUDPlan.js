@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.post("/create-plan", async (req, res) => {
     try{
-        const {longtitude, latitude} = Token.decode(req.headers["x-token"]).payload;
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token) {
+            res.status(401).send("Unauthored query");
+        }
+        const {longtitude, latitude} = req.body;
         if (!longtitude || !latitude) { 
             res.status(400).send("All input is required");
         }
@@ -67,7 +71,11 @@ router.get("/get-all-plan", async (req, res) => {
 
 router.get("/get-plan-around", async (req, res) => {
     try{
-        const {distance, longPerson, laPerson} = Token.decode(req.headers["x-token"]).payload;
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token) {
+            res.status(401).send("Unauthored query");
+        }
+        const {distance, longPerson, laPerson} = req.body;
         if(!distance || !longPerson || !laPerson){
             res.status(400).send("All input is required");
         }
@@ -95,7 +103,11 @@ router.get("/get-plan-around", async (req, res) => {
 
 router.post("/update-plan", async (req, res) => {
     try{
-        const {experience, latitude, longtitude} = Token.decode(req.headers["x-token"]).payload;
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token) {
+            res.status(401).send("Unauthored query");
+        }
+        const {experience, latitude, longtitude} = req.body;
         if(!experience || !latitude || !longtitude){
             res.status(400).send("All input are required");
         }
@@ -130,7 +142,11 @@ router.post("/update-plan", async (req, res) => {
 
 router.post("/delete", async (req, res) => {
     try{
-        const {latitude, longtitude} = Token.decode(req.headers["x-token"]).payload;
+        const token = Token.decode(req.headers["x-token"]);
+        if (!token || !token.payload["admin"]) {
+            res.status(401).send("Unauthored query");
+        }
+        const {latitude, longtitude} = req.body;
         if(!latitude || !longtitude) {
             res.status(400).send("All input are required");
         }
