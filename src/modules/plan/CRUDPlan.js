@@ -144,7 +144,7 @@ router.post("/update-plan", async (req, res) => {
 router.post("/delete", async (req, res) => {
     try{
         const token = Token.decode(req.headers["x-token"]);
-        if (!token || !token.payload["admin"]) {
+        if (!token || !token.payload.admin) {
             res.status(401).send("Unauthored query");
         }
         const {latitude, longtitude} = req.body;
