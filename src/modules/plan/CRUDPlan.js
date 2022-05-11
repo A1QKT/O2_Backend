@@ -81,16 +81,15 @@ router.get("/get-plan-around", async (req, res) => {
         }
         const plans = await Plan.aggregate([{
                 $match: {
-                    distance: {
-                        $gte: {
-                            $sqrt: {
-                                $add: [
-                                    { $pow: [ { $subtract: [ "$longtitude", longPerson ] }, 2 ] },
-                                    { $pow: [ { $subtract: [ "$latitude", laPerson ] }, 2 ] }
-                                ]
-                            }
+                    $gte: [
+                        distance,
+                        {$sqrt: {
+                            $add: [
+                                { $pow: [ { $subtract: [ "$longtitude", longPerson ] }, 2 ] },
+                                { $pow: [ { $subtract: [ "$latitude", laPerson ] }, 2 ] }
+                            ]
                         }
-                    }
+                    }]
                 }
             }]);
         res.status(200).json(plans);
